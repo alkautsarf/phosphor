@@ -1,0 +1,38 @@
+{
+  "name": "phosphor",
+  "version": "0.1.0",
+  "description": "Render images in your terminal — Kitty, Sixel, iTerm2, halfblock with tmux passthrough",
+  "type": "module",
+  "bin": {
+    "phosphor": "./dist/index.js",
+    "ph": "./dist/index.js",
+    "pho": "./dist/index.js"
+  },
+  "exports": {
+    ".": "./dist/lib/phosphor.js"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "compile": "bun build src/index.ts --compile --outfile phosphor",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.9"
+  },
+  "keywords": [
+    "terminal",
+    "image",
+    "kitty",
+    "sixel",
+    "iterm2",
+    "tmux",
+    "cli",
+    "tui"
+  ],
+  "license": "MIT",
+  "author": "elpabl0"
+}

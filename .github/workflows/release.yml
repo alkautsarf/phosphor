@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            target: darwin-arm64
+          - os: ubuntu-latest
+            target: linux-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Compile binary
+        run: |
+          bun build --compile src/index.ts --outfile phosphor-${{ matrix.target }}
+
+      - name: Create tarball
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          tar -czf phosphor-${TAG}-${{ matrix.target }}.tar.gz phosphor-${{ matrix.target }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phosphor-${{ matrix.target }}
+          path: phosphor-v*-${{ matrix.target }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TAG" \
+            --generate-notes \
+            phosphor-${TAG}-*.tar.gz
+
+  update-tap:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+
+          # Download tarballs and compute SHAs
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "phosphor-${TAG}-darwin-arm64.tar.gz" \
+            --pattern "phosphor-${TAG}-linux-x64.tar.gz"
+          SHA256_DARWIN=$(shasum -a 256 phosphor-${TAG}-darwin-arm64.tar.gz | cut -d' ' -f1)
+          SHA256_LINUX=$(shasum -a 256 phosphor-${TAG}-linux-x64.tar.gz | cut -d' ' -f1)
+
+          # Clone tap repo
+          git clone https://x-access-token:${GH_TOKEN}@github.com/alkautsarf/homebrew-tap.git tap
+          cd tap
+
+          # Write updated formula
+          cat > Formula/phosphor.rb << EOF
+          class Phosphor < Formula
+            desc "Render images in your terminal — Kitty, Sixel, iTerm2 with tmux passthrough"
+            homepage "https://github.com/alkautsarf/phosphor"
+            version "${VERSION}"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/alkautsarf/phosphor/releases/download/${TAG}/phosphor-${TAG}-darwin-arm64.tar.gz"
+                sha256 "${SHA256_DARWIN}"
+              end
+            end
+
+            on_linux do
+              on_intel do
+                url "https://github.com/alkautsarf/phosphor/releases/download/${TAG}/phosphor-${TAG}-linux-x64.tar.gz"
+                sha256 "${SHA256_LINUX}"
+              end
+            end
+
+            def install
+              if OS.mac? && Hardware::CPU.arm?
+                bin.install "phosphor-darwin-arm64" => "phosphor"
+              elsif OS.linux? && Hardware::CPU.intel?
+                bin.install "phosphor-linux-x64" => "phosphor"
+              end
+              bin.install_symlink "phosphor" => "ph"
+              bin.install_symlink "phosphor" => "pho"
+            end
+
+            test do
+              assert_predicate bin/"phosphor", :executable?
+            end
+          end
+          EOF
+
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' Formula/phosphor.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/phosphor.rb
+          git commit -m "chore: bump phosphor to ${VERSION}"
+          git push
