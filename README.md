@@ -38,12 +38,28 @@ phosphor image.png --info
 
 # Read from stdin
 cat screenshot.png | phosphor
+
+# Open a PDF (interactive viewer)
+phosphor document.pdf
+
+# Open PDF at specific page
+phosphor document.pdf --page 5
+```
+
+### PDF Controls
+
+```
+→ / l / j / Space   Next page
+← / h / k           Previous page
+1-9                 Jump to 10%-90%
+q                   Quit
 ```
 
 ## Supported Formats
 
 | Format | Support |
 |--------|---------|
+| PDF | Interactive viewer (requires poppler) |
 | PNG | Native |
 | JPEG | Native |
 | WebP | Native |

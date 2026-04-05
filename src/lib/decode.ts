@@ -35,7 +35,7 @@ async function decodeWithSharp(
   maxWidth?: number,
   maxHeight?: number,
 ): Promise<DecodedImage> {
-  let pipeline = sharp(input);
+  let pipeline = sharp(input).rotate(); // auto-rotate based on EXIF orientation
 
   if (maxWidth || maxHeight) {
     pipeline = pipeline.resize(maxWidth, maxHeight, { fit: "inside" });

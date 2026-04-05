@@ -20,7 +20,7 @@ function diacritic(index: number): string {
 }
 
 /** Generate a random image ID (1 to 2^24-1) to avoid collisions between instances. */
-function randomImageId(): number {
+export function randomImageId(): number {
   return Math.floor(Math.random() * 0xfffffe) + 1;
 }
 
@@ -61,49 +61,51 @@ export function encodeVirtual(
   cols: number,
   rows: number,
 ): { transmit: string[]; placeholders: string } {
-  const imageId = randomImageId();
-  const b64 = pngBuffer.toString("base64");
+  return encodeVirtualWithId(pngBuffer, randomImageId(), cols, rows);
+}
 
-  // Build transmit chunks with virtual placement enabled
+/**
+ * Encode a PNG as a Kitty virtual placement with a SPECIFIC image ID.
+ * Used by the PDF viewer and player to control which image the placeholders reference.
+ */
+export function encodeVirtualWithId(
+  pngBuffer: Buffer,
+  imageId: number,
+  cols: number,
+  rows: number,
+): { transmit: string[]; placeholders: string } {
+  const b64 = pngBuffer.toString("base64");
   const transmit: string[] = [];
+
   if (b64.length <= CHUNK_SIZE) {
-    transmit.push(
-      `\x1b_Gq=2,i=${imageId},a=T,U=1,f=100,t=d,m=0;${b64}\x1b\\`,
-    );
+    transmit.push(`\x1b_Gq=2,i=${imageId},a=T,U=1,f=100,t=d,m=0;${b64}\x1b\\`);
   } else {
     const totalChunks = Math.ceil(b64.length / CHUNK_SIZE);
     for (let i = 0; i < totalChunks; i++) {
       const chunk = b64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
       const more = i === totalChunks - 1 ? 0 : 1;
       if (i === 0) {
-        transmit.push(
-          `\x1b_Gq=2,i=${imageId},a=T,U=1,f=100,t=d,m=${more};${chunk}\x1b\\`,
-        );
+        transmit.push(`\x1b_Gq=2,i=${imageId},a=T,U=1,f=100,t=d,m=${more};${chunk}\x1b\\`);
       } else {
         transmit.push(`\x1b_Gm=${more},q=2;${chunk}\x1b\\`);
       }
     }
   }
 
-  // Encode image ID into foreground color bytes
+  // Build placeholders
   const idR = (imageId >> 16) & 0xff;
   const idG = (imageId >> 8) & 0xff;
   const idB = imageId & 0xff;
   const idExtra = (imageId >> 24) & 0xff;
   const fgColor = `\x1b[38;2;${idR};${idG};${idB}m`;
-  const fgReset = `\x1b[39m`;
-
-  // Build placeholder lines
   const lines: string[] = [];
   for (let y = 0; y < rows; y++) {
     let line = fgColor;
-    // First cell: placeholder + row diacritic + col(0) diacritic + msb diacritic
     line += PLACEHOLDER + diacritic(y) + diacritic(0) + diacritic(idExtra);
-    // Remaining cells: bare placeholder (inherits row, auto-increments col)
     for (let x = 1; x < cols; x++) {
       line += PLACEHOLDER;
     }
-    line += fgReset;
+    line += `\x1b[39m`;
     lines.push(line);
   }
 

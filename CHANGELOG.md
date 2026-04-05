@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.0] - 2026-04-05
+
+### Added
+
+- Interactive PDF viewer with page navigation (h/l, j/k, arrows, 1-9 jump, q quit)
+- PDF page rendering via pdftocairo at dynamic DPI to fill terminal
+- Centered image and PDF rendering (horizontally and vertically)
+- Terminal resize handling (SIGWINCH) in PDF viewer
+- Minimum terminal size check with "too small" message
+- `--page N` flag to open PDF at specific page
+
+### Fixed
+
+- HEIC/JPEG images now auto-rotate based on EXIF orientation
+- Removed `-h` alias for `--height` to avoid conflict with `--help`
+
 ## [0.1.0] - 2026-04-05
 
 ### Added
@@ -23,4 +39,5 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - `install.sh` for curl-based installation
 - Homebrew formula support
 
+[0.2.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.2.0
 [0.1.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.1.0

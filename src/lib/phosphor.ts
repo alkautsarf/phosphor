@@ -98,7 +98,16 @@ async function renderImage(
 
     const { transmit, placeholders } = kittyVirtual(decoded.png, cols, rows);
     writeTransmit(transmit, true);
-    writePlaceholders(placeholders);
+
+    // Center horizontally
+    const padLeft = Math.max(0, Math.floor((term.cols - cols) / 2));
+    if (padLeft > 0) {
+      const padding = " ".repeat(padLeft);
+      const centered = placeholders.split("\n").map((line) => padding + line).join("\n");
+      writePlaceholders(centered);
+    } else {
+      writePlaceholders(placeholders);
+    }
     process.stdout.write("\n");
     return;
   }
@@ -141,3 +150,5 @@ function encodeForProtocol(protocol: Protocol, image: DecodedImage): string[] {
 
 export { getImageInfo } from "./decode.js";
 export { detect } from "./detect.js";
+export { isPdf, getPdfInfo } from "./pdf.js";
+export { viewPdf } from "./pdfviewer.js";
