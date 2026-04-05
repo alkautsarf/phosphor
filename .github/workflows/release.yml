@@ -27,16 +27,37 @@ jobs:
         with:
           bun-version: latest
 
-      - run: bun install
+      - run: bun install --production
 
-      - name: Compile binary
-        run: |
-          bun build --compile src/index.ts --outfile phosphor-${{ matrix.target }}
-
-      - name: Create tarball
+      - name: Build package
         run: |
           TAG=${GITHUB_REF#refs/tags/}
-          tar -czf phosphor-${TAG}-${{ matrix.target }}.tar.gz phosphor-${{ matrix.target }}
+          mkdir -p dist-pkg
+
+          # Bundle JS (non-compiled — keeps native module loading working)
+          bun build src/index.ts --outdir dist-pkg --target bun --external sharp
+
+          # Copy sharp native bindings
+          mkdir -p dist-pkg/node_modules
+          cp -r node_modules/sharp dist-pkg/node_modules/
+          cp -r node_modules/@img dist-pkg/node_modules/
+          cp -r node_modules/color dist-pkg/node_modules/
+          cp -r node_modules/color-convert dist-pkg/node_modules/
+          cp -r node_modules/color-name dist-pkg/node_modules/
+          cp -r node_modules/color-string dist-pkg/node_modules/
+          cp -r node_modules/detect-libc dist-pkg/node_modules/
+          cp -r node_modules/is-arrayish dist-pkg/node_modules/
+          cp -r node_modules/semver dist-pkg/node_modules/
+          cp -r node_modules/simple-swizzle dist-pkg/node_modules/
+
+          # Create launcher script
+          cat > dist-pkg/phosphor << 'LAUNCHER'
+          #!/usr/bin/env bun
+          import "./index.js";
+          LAUNCHER
+          chmod +x dist-pkg/phosphor
+
+          tar -czf phosphor-${TAG}-${{ matrix.target }}.tar.gz -C dist-pkg .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -76,7 +97,6 @@ jobs:
           TAG=${GITHUB_REF#refs/tags/}
           VERSION=${TAG#v}
 
-          # Download tarballs and compute SHAs
           gh release download "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --pattern "phosphor-${TAG}-darwin-arm64.tar.gz" \
@@ -84,16 +104,15 @@ jobs:
           SHA256_DARWIN=$(shasum -a 256 phosphor-${TAG}-darwin-arm64.tar.gz | cut -d' ' -f1)
           SHA256_LINUX=$(shasum -a 256 phosphor-${TAG}-linux-x64.tar.gz | cut -d' ' -f1)
 
-          # Clone tap repo
           git clone https://x-access-token:${GH_TOKEN}@github.com/alkautsarf/homebrew-tap.git tap
           cd tap
 
-          # Write updated formula
           cat > Formula/phosphor.rb << EOF
           class Phosphor < Formula
             desc "Render images in your terminal — Kitty, Sixel, iTerm2 with tmux passthrough"
             homepage "https://github.com/alkautsarf/phosphor"
             version "${VERSION}"
+            depends_on "oven-sh/bun/bun"
 
             on_macos do
               on_arm do
@@ -110,13 +129,10 @@ jobs:
             end
 
             def install
-              if OS.mac? && Hardware::CPU.arm?
-                bin.install "phosphor-darwin-arm64" => "phosphor"
-              elsif OS.linux? && Hardware::CPU.intel?
-                bin.install "phosphor-linux-x64" => "phosphor"
-              end
-              bin.install_symlink "phosphor" => "ph"
-              bin.install_symlink "phosphor" => "pho"
+              libexec.install Dir["*"]
+              bin.write_exec_script libexec/"phosphor"
+              bin.install_symlink bin/"phosphor" => "ph"
+              bin.install_symlink bin/"phosphor" => "pho"
             end
 
             test do
@@ -125,7 +141,6 @@ jobs:
           end
           EOF
 
-          # Remove leading whitespace from heredoc
           sed -i 's/^          //' Formula/phosphor.rb
 
           git config user.name "github-actions[bot]"

@@ -3,6 +3,13 @@ set -e
 
 REPO="alkautsarf/phosphor"
 
+# Check bun is installed
+if ! command -v bun >/dev/null 2>&1; then
+  echo "phosphor requires bun. Install it first:" >&2
+  echo "  curl -fsSL https://bun.sh/install | bash" >&2
+  exit 1
+fi
+
 # Detect OS
 case "$(uname -s)" in
   Darwin) OS="darwin" ;;
@@ -19,10 +26,9 @@ esac
 
 TARGET="${OS}-${ARCH}"
 
-# Only supported combinations
 case "$TARGET" in
   darwin-arm64|linux-x64) ;;
-  *) echo "No prebuilt binary for ${TARGET}. Install from source instead:" >&2
+  *) echo "No prebuilt package for ${TARGET}. Install from source instead:" >&2
      echo "  git clone https://github.com/${REPO}.git && cd phosphor && bun install && bun run src/index.ts" >&2
      exit 1 ;;
 esac
@@ -35,32 +41,29 @@ if [ -z "$TAG" ]; then
 fi
 
 URL="https://github.com/${REPO}/releases/download/${TAG}/phosphor-${TAG}-${TARGET}.tar.gz"
-BINARY="phosphor-${TARGET}"
 
 echo "Installing phosphor ${TAG} (${TARGET})..."
 
-WORK_DIR=$(mktemp -d)
-trap 'rm -rf "$WORK_DIR"' EXIT
+# Install to ~/.local/lib/phosphor
+INSTALL_DIR="${HOME}/.local/lib/phosphor"
+BIN_DIR="${HOME}/.local/bin"
+mkdir -p "$INSTALL_DIR" "$BIN_DIR"
 
-curl -sfL "$URL" | tar xz -C "$WORK_DIR"
+# Clean previous install
+rm -rf "$INSTALL_DIR"/*
 
-# Install to ~/.local/bin (no sudo) or /usr/local/bin
-if [ -w "/usr/local/bin" ]; then
-  INSTALL_DIR="/usr/local/bin"
-else
-  INSTALL_DIR="${HOME}/.local/bin"
-  mkdir -p "$INSTALL_DIR"
-fi
+# Extract package
+curl -sfL "$URL" | tar xz -C "$INSTALL_DIR"
 
-mv "$WORK_DIR/$BINARY" "$INSTALL_DIR/phosphor"
-chmod +x "$INSTALL_DIR/phosphor"
-ln -sf "$INSTALL_DIR/phosphor" "$INSTALL_DIR/ph"
-ln -sf "$INSTALL_DIR/phosphor" "$INSTALL_DIR/pho"
+# Create symlinks in bin
+ln -sf "$INSTALL_DIR/phosphor" "$BIN_DIR/phosphor"
+ln -sf "$INSTALL_DIR/phosphor" "$BIN_DIR/ph"
+ln -sf "$INSTALL_DIR/phosphor" "$BIN_DIR/pho"
 
-echo "Installed phosphor to ${INSTALL_DIR}/phosphor (aliases: ph, pho)"
+echo "Installed phosphor to ${INSTALL_DIR} (aliases: phosphor, ph, pho)"
 
-if ! echo "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
+if ! echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
   echo ""
-  echo "Add ${INSTALL_DIR} to your PATH:"
-  echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
+  echo "Add ${BIN_DIR} to your PATH:"
+  echo "  export PATH=\"${BIN_DIR}:\$PATH\""
 fi
