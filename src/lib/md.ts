@@ -36,6 +36,7 @@ function loadFonts() {
   const candidates = [
     join(import.meta.dir, "..", "fonts"),              // src/lib/ → src/fonts/
     join(import.meta.dir, "fonts"),                    // flat
+    join(import.meta.dir, "src", "fonts"),             // bundled: index.js + src/fonts/
     join(import.meta.dir, "..", "src", "fonts"),       // dist/ → src/fonts/
     join(import.meta.dir, "..", "..", "src", "fonts"), // nested dist
   ];

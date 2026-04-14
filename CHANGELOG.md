@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.1] - 2026-04-14
+
+### Fixed
+
+- Include font files in release tarball for homebrew/binary distribution
+- Add font resolution path for bundled package layout
+
 ## [0.3.0] - 2026-04-14
 
 ### Added
@@ -57,6 +64,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - `install.sh` for curl-based installation
 - Homebrew formula support
 
+[0.3.1]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.1
 [0.3.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.2.0
 [0.1.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.1.0

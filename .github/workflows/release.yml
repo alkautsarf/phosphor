@@ -37,6 +37,10 @@ jobs:
           # Bundle JS (non-compiled — keeps native module loading working)
           bun build src/index.ts --outdir dist-pkg --target bun --external sharp
 
+          # Copy font files for markdown rendering
+          mkdir -p dist-pkg/src/fonts
+          cp src/fonts/*.otf dist-pkg/src/fonts/
+
           # Copy sharp native bindings
           mkdir -p dist-pkg/node_modules
           cp -r node_modules/sharp dist-pkg/node_modules/
