@@ -1,4 +1,4 @@
-Render images in your terminal. Supports Kitty graphics protocol with Unicode virtual placement, Sixel, iTerm2, and halfblock fallback — with full tmux passthrough.
+Render images, PDFs, and markdown in your terminal. Supports Kitty graphics protocol with Unicode virtual placement, Sixel, iTerm2, and halfblock fallback — with full tmux passthrough.
 
 Built for terminals that support modern graphics protocols (Ghostty, Kitty, WezTerm, iTerm2) and works seamlessly inside tmux.
 
@@ -44,6 +44,13 @@ phosphor document.pdf
 
 # Open PDF at specific page
 phosphor document.pdf --page 5
+
+# View markdown with GUI-quality rendering
+phosphor README.md
+
+# Markdown with theme override
+phosphor README.md --dark
+phosphor README.md --transparent
 ```
 
 ### PDF Controls
@@ -55,10 +62,26 @@ phosphor document.pdf --page 5
 q                   Quit
 ```
 
+### Markdown Controls
+
+```
+↓ / j           Scroll down
+↑ / k           Scroll up
+Space           Page down
+gg              Go to top
+G               Go to end
++ / =           Zoom in
+- / _           Zoom out
+0               Jump to top
+1-9             Jump to 10%-90%
+q               Quit
+```
+
 ## Supported Formats
 
 | Format | Support |
 |--------|---------|
+| Markdown | GUI-quality rendered viewer (`.md`, `.markdown`, `.mdx`) |
 | PDF | Interactive viewer (requires poppler) |
 | PNG | Native |
 | JPEG | Native |
@@ -108,6 +131,7 @@ await renderer.display('./photo.png', { width: 60 })
 
 | Variable | Description | Example |
 |----------|-------------|---------|
+| `PHOSPHOR_THEME` | Default markdown theme | `dark`, `light`, `transparent` |
 | `PHOSPHOR_CELL_SIZE` | Override cell pixel size detection | `20x56` |
 
 ## Build from Source

@@ -4,6 +4,10 @@ export type Key =
   | "right"
   | "left"
   | "ctrl+c"
+  | "G"
+  | "g"
+  | "plus"
+  | "minus"
   | { type: "digit"; value: number };
 
 type KeyHandler = (key: Key) => void;
@@ -79,6 +83,12 @@ function onData(buf: Buffer): void {
     case "\x1b[D":    return handler("left");
     case "\x1b[B":    return handler("right");  // down = next page
     case "\x1b[A":    return handler("left");   // up = prev page
+    case "G":         return handler("G");
+    case "g":         return handler("g");
+    case "+":
+    case "=":         return handler("plus");
+    case "-":
+    case "_":         return handler("minus");
   }
 
   if (seq.length === 1 && seq >= "0" && seq <= "9") {

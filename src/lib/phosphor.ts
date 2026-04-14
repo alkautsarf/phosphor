@@ -152,3 +152,5 @@ export { getImageInfo } from "./decode.js";
 export { detect } from "./detect.js";
 export { isPdf, getPdfInfo } from "./pdf.js";
 export { viewPdf } from "./pdfviewer.js";
+export { isMd } from "./md.js";
+export { viewMd } from "./mdviewer.js";

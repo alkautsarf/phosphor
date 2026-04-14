@@ -1,13 +1,14 @@
-import { display, detect, getImageInfo, isPdf, getPdfInfo, viewPdf } from "./lib/phosphor.js";
+import { display, detect, getImageInfo, isPdf, getPdfInfo, viewPdf, isMd, viewMd } from "./lib/phosphor.js";
+import type { MdTheme } from "./lib/md.js";
 import type { Protocol } from "./lib/detect.js";
 
 process.on("SIGPIPE", () => process.exit(0));
 
 function printUsage(): void {
-  console.log(`phosphor — render images and view PDFs in your terminal
+  console.log(`phosphor — render images, PDFs, and markdown in your terminal
 
 Usage:
-  phosphor <file>                Display an image or open a PDF
+  phosphor <file>                Display an image, PDF, or markdown
   phosphor <file> -w 60          Constrain width (cells)
   phosphor <file> --height 20    Constrain height (cells)
   phosphor <file> -p kitty       Force protocol (kitty|iterm2|sixel|halfblock)
@@ -21,14 +22,33 @@ PDF Controls:
   1-9             Jump to 10%-90%
   q               Quit
 
+Markdown Controls:
+  ↓ / j           Scroll down
+  ↑ / k           Scroll up
+  Space           Page down
+  gg              Go to top
+  G               Go to end
+  + / =           Zoom in
+  - / _           Zoom out
+  0               Jump to top
+  1-9             Jump to 10%-90%
+  q               Quit
+
 Options:
   -w, --width <N>     Max width in terminal cells
   --height <N>        Max height in terminal cells
   -p, --protocol <P>  Force protocol: kitty, iterm2, sixel, halfblock
   --info              Show file and terminal info without rendering
   --page <N>          Open PDF at page N
+  --dark              Dark theme for markdown
+  --light             Light theme for markdown
+  --transparent       Transparent background (for transparent terminals)
   --version           Show version
-  --help              Show this help`);
+  --help              Show this help
+
+Environment:
+  PHOSPHOR_THEME      Default markdown theme: dark, light, transparent
+                      Set in .zshrc: export PHOSPHOR_THEME=transparent`);
 }
 
 function parseArgs(argv: string[]) {
@@ -41,6 +61,7 @@ function parseArgs(argv: string[]) {
     info: false,
     help: false,
     version: false,
+    theme: undefined as "light" | "dark" | "transparent" | undefined,
   };
 
   const args = argv.slice(2);
@@ -68,6 +89,15 @@ function parseArgs(argv: string[]) {
         break;
       case "--help":
         result.help = true;
+        break;
+      case "--light":
+        result.theme = "light";
+        break;
+      case "--dark":
+        result.theme = "dark";
+        break;
+      case "--transparent":
+        result.theme = "transparent";
         break;
       case "--version":
         result.version = true;
@@ -134,6 +164,28 @@ async function main(): Promise<void> {
 
     const info = detect();
     await viewPdf(input, { info, pdfInfo, startPage: opts.page });
+    return;
+  }
+
+  // Markdown detection and viewing
+  if (typeof input === "string" && isMd(input)) {
+    if (opts.info) {
+      const term = detect();
+      const { readFileSync } = await import("fs");
+      const source = readFileSync(input, "utf-8");
+      const lines = source.split("\n").length;
+      console.log(`File:     ${opts.file}`);
+      console.log(`Format:   Markdown`);
+      console.log(`Lines:    ${lines}`);
+      console.log(`Protocol: ${term.protocol}`);
+      console.log(`Terminal: ${term.terminal ?? "unknown"}`);
+      console.log(`tmux:     ${term.tmux}`);
+      return;
+    }
+
+    const info = detect();
+    const { resolve } = await import("path");
+    await viewMd(resolve(input), { info, theme: opts.theme });
     return;
   }
 

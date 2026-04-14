@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] - 2026-04-14
+
+### Added
+
+- GUI-quality markdown rendering via Satori + sharp pipeline
+- Interactive scrolling viewer with vim navigation (j/k, gg/G, Space, 0-9)
+- Zoom in/out (+/-) with instant sharp.resize scaling
+- Chunked rendering architecture — 12 independent Satori renders instead of one monolithic pass
+- Dark, light, and transparent theme support with polished color palettes
+- Geist Sans + Geist Mono fonts (Vercel's OTF, optimized for Satori)
+- Inline image rendering in markdown (local images resolved as data URIs)
+- Rich element support: headings, code blocks with language labels, tables, blockquotes, lists, task checkboxes, horizontal rules
+- `--dark`, `--light`, `--transparent` CLI flags for theme override
+- `PHOSPHOR_THEME` environment variable for persistent theme preference
+- Flicker-free viewport rendering (in-place placeholder overwrite, no screen clear)
+- Auto-detection of `.md`, `.markdown`, `.mdown`, `.mkd`, `.mdx` extensions
+- `--info` flag support for markdown files
+
 ## [0.2.0] - 2026-04-05
 
 ### Added
@@ -39,5 +57,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - `install.sh` for curl-based installation
 - Homebrew formula support
 
+[0.3.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.2.0
 [0.1.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.1.0
