@@ -1,0 +1,12 @@
+# bench label=phase-3-pdfjs renderer=pdfjs pdf=/Users/alkautsar/Downloads/opus-4-7-system-card.pdf
+# pages=8/232  maxW=1800  maxH=1200  dpiFloor=144
+
+workload          n   avg(ms)  p50(ms)  p95(ms)  min(ms)  max(ms)
+cold-sequential   8    208.0   208.0   266.3   174.8   266.3
+warm-cold-pass    8    197.7   201.3   242.3   158.6   242.3
+warm-cache-hit    8      0.0     0.0     0.0     0.0     0.0
+pingpong-nocache  6    202.5   243.8   247.2   158.3   247.2
+pingpong-cached   4      0.0     0.0     0.0     0.0     0.0
+prefetch-1.5s     8     19.9     0.0   159.4     0.0   159.4    cache-hits=7/8
+
+cold breakdown (avg ms):  raster=152.2  decode=55.5  encode=0.3

@@ -1,0 +1,12 @@
+# bench label=phase-0-baseline renderer=poppler pdf=/Users/alkautsar/Downloads/opus-4-7-system-card.pdf
+# pages=8/232  maxW=1800  maxH=1200  dpiFloor=300
+
+workload          n   avg(ms)  p50(ms)  p95(ms)  min(ms)  max(ms)
+cold-sequential   8    798.5   865.5  1113.2   411.9  1113.2
+warm-cold-pass    8    794.2   871.2  1109.7   402.7  1109.7
+warm-cache-hit    8      0.0     0.0     0.0     0.0     0.0
+pingpong-nocache  6    756.1  1107.3  1113.4   399.3  1113.4
+pingpong-cached   4      0.0     0.0     0.0     0.0     0.0
+prefetch-1.5s     8     50.0     0.0   400.1     0.0   400.1    cache-hits=7/8
+
+cold breakdown (avg ms):  raster=766.6  decode=31.6  encode=0.3

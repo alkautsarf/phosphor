@@ -787,8 +787,37 @@ export interface ChunkedDocument {
 
 const CHUNK_HEIGHT_TARGET = 500;
 const CHUNK_HEIGHT_MAX = 1200;
+// Satori's layout cost grows super-linearly with node count. A 200-line code
+// block becomes 200 row divs in one render — that hangs for tens of seconds.
+// Splitting into smaller code tokens keeps each Satori call bounded.
+const MAX_CODE_LINES_PER_TOKEN = 25;
+
+function splitOversizedCodeTokens(tokens: Token[]): Token[] {
+  let out: Token[] | null = null;
+  for (let idx = 0; idx < tokens.length; idx++) {
+    const t = tokens[idx]!;
+    if (t.type !== "code") { out?.push(t); continue; }
+    const tok = t as Tokens.Code;
+    const lines = tok.text.split("\n");
+    if (lines.length <= MAX_CODE_LINES_PER_TOKEN) { out?.push(t); continue; }
+    if (!out) out = tokens.slice(0, idx);
+    for (let i = 0; i < lines.length; i += MAX_CODE_LINES_PER_TOKEN) {
+      const slice = lines.slice(i, i + MAX_CODE_LINES_PER_TOKEN).join("\n");
+      out.push({
+        ...tok,
+        raw: slice,
+        text: slice,
+        // Only the first part keeps the language label so the visual stack
+        // reads as one block, not N labelled boxes.
+        lang: i === 0 ? tok.lang : "",
+      });
+    }
+  }
+  return out ?? tokens;
+}
 
 export function splitTokensIntoChunks(tokens: Token[]): Token[][] {
+  tokens = splitOversizedCodeTokens(tokens);
   const groups: Token[][] = [];
   let current: Token[] = [];
   let currentH = 0;

@@ -82,7 +82,7 @@ q               Quit
 | Format | Support |
 |--------|---------|
 | Markdown | GUI-quality rendered viewer (`.md`, `.markdown`, `.mdx`) |
-| PDF | Interactive viewer (requires poppler) |
+| PDF | Interactive viewer with LRU cache + adjacent-page prefetch (in-process pdfjs, falls back to poppler) |
 | PNG | Native |
 | JPEG | Native |
 | WebP | Native |

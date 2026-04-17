@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-04-17
+
+### Added
+
+- In-process PDF rasterization via `pdfjs-dist` + `@napi-rs/canvas` (5× faster cold render than `pdftocairo`); falls back to `pdftocairo` if pdfjs init fails
+- LRU page cache with stable kitty image IDs — revisiting a page is effectively instant (sub-20ms placeholder repaint, no re-transmit)
+- Background prefetch of N±2 pages around the current view
+- Coalesced `showPage` loop — held arrow keys never spawn redundant renders, latest target always wins
+- Bench harnesses at `bench/pdf-bench.ts` and `bench/md-bench.ts` for future regression checks
+
+### Changed
+
+- `pdftocairo` invocation now goes through `Bun.spawn` with stdout pipe (no temp files, async, doesn't block the JS event loop)
+- PDF render DPI tightened from a 300 floor to a fitted-to-terminal range (cuts cold render ~35% on its own)
+
+### Fixed
+
+- Markdown viewer no longer hangs Satori on documents containing very long code blocks; oversized `code` tokens are split at 25 lines so each Satori call stays bounded
+
 ## [0.3.1] - 2026-04-14
 
 ### Fixed
@@ -64,6 +83,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - `install.sh` for curl-based installation
 - Homebrew formula support
 
+[0.4.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.4.0
 [0.3.1]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.1
 [0.3.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.0
 [0.2.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.2.0

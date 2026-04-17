@@ -1,18 +1,13 @@
 import { execSync } from "child_process";
-import { readFileSync, unlinkSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
 
 export interface PdfInfo {
   pages: number;
 }
 
-/** Check if a file is a PDF by extension. */
 export function isPdf(path: string): boolean {
   return path.toLowerCase().endsWith(".pdf");
 }
 
-/** Get PDF page count via pdfinfo. Returns null if not a PDF or pdfinfo unavailable. */
 export function getPdfInfo(path: string): PdfInfo | null {
   try {
     const output = execSync(`pdfinfo '${path.replace(/'/g, "'\\''")}'`, {
@@ -28,21 +23,37 @@ export function getPdfInfo(path: string): PdfInfo | null {
   return null;
 }
 
-/**
- * Render a specific PDF page to PNG via pdftocairo.
- * Returns the PNG buffer. Page is 1-indexed.
- */
-export function renderPage(path: string, page: number, dpi: number = 150): Buffer {
-  const tmpBase = join(tmpdir(), `phosphor-pdf-${Date.now()}`);
-  const tmpPng = `${tmpBase}.png`;
+function pdftocairoArgs(path: string, page: number, dpi: number): string[] {
+  return [
+    "pdftocairo",
+    "-png",
+    "-singlefile",
+    "-f", String(page),
+    "-l", String(page),
+    "-r", String(dpi),
+    path,
+    "-",
+  ];
+}
 
-  try {
-    execSync(
-      `pdftocairo -png -f ${page} -l ${page} -singlefile -r ${dpi} '${path.replace(/'/g, "'\\''")}' '${tmpBase}'`,
-      { stdio: "ignore", timeout: 10000 },
-    );
-    return readFileSync(tmpPng);
-  } finally {
-    try { unlinkSync(tmpPng); } catch { /* ignore */ }
-  }
+const SPAWN_OPTS = { stdout: "pipe", stderr: "ignore", stdin: "ignore" } as const;
+
+export async function renderPageAsync(
+  path: string,
+  page: number,
+  dpi: number,
+): Promise<Buffer> {
+  const proc = Bun.spawn(pdftocairoArgs(path, page, dpi), SPAWN_OPTS);
+  const [buf, exit] = await Promise.all([
+    new Response(proc.stdout).arrayBuffer(),
+    proc.exited,
+  ]);
+  if (exit !== 0) throw new Error(`pdftocairo exited with code ${exit}`);
+  return Buffer.from(buf);
+}
+
+export function renderPage(path: string, page: number, dpi: number = 150): Buffer {
+  const result = Bun.spawnSync(pdftocairoArgs(path, page, dpi), SPAWN_OPTS);
+  if (result.exitCode !== 0) throw new Error(`pdftocairo failed (exit ${result.exitCode})`);
+  return Buffer.from(result.stdout);
 }
