@@ -54,6 +54,17 @@ jobs:
           cp -r node_modules/semver dist-pkg/node_modules/
           cp -r node_modules/simple-swizzle dist-pkg/node_modules/
 
+          # Copy pdfjs-dist (pure JS) — drives in-process PDF rasterization
+          cp -r node_modules/pdfjs-dist dist-pkg/node_modules/
+
+          # Copy @napi-rs/canvas — pdfjs render target. Includes the matched
+          # platform-specific native subpackage that bun installed.
+          mkdir -p dist-pkg/node_modules/@napi-rs
+          cp -r node_modules/@napi-rs/canvas dist-pkg/node_modules/@napi-rs/
+          for d in node_modules/@napi-rs/canvas-*; do
+            [ -d "$d" ] && cp -r "$d" dist-pkg/node_modules/@napi-rs/
+          done
+
           # Create launcher script
           cat > dist-pkg/phosphor << 'LAUNCHER'
           #!/usr/bin/env bun

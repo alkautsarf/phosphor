@@ -1,6 +1,6 @@
 {
   "name": "phosphor-cli",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Render images, PDFs, and markdown in your terminal — Kitty, Sixel, iTerm2, halfblock with tmux passthrough",
   "type": "module",
   "bin": {

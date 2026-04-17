@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.1] - 2026-04-17
+
+### Fixed
+
+- Bundle `pdfjs-dist` and `@napi-rs/canvas` (with matched platform binary) in the release tarball so brew/binary installs get the in-process PDF renderer added in 0.4.0 instead of silently falling back to `pdftocairo`
+
 ## [0.4.0] - 2026-04-17
 
 ### Added
@@ -83,6 +89,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - `install.sh` for curl-based installation
 - Homebrew formula support
 
+[0.4.1]: https://github.com/alkautsarf/phosphor/releases/tag/v0.4.1
 [0.4.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.4.0
 [0.3.1]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.1
 [0.3.0]: https://github.com/alkautsarf/phosphor/releases/tag/v0.3.0
